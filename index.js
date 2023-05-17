@@ -14,6 +14,10 @@ app.get('/', (req, res)=>{
     res.send('Toy Marketplace Server is running')
 })
 
+app.get('/about', (req, res)=>{
+    res.send('About Toy Marketplace')
+})
+
 
 
 app.listen(port, ()=>{
