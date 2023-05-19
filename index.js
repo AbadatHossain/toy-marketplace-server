@@ -12,8 +12,8 @@ app.use(express.json())
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://toyMarketplace:UmFhIpTIa1czN6WC@cluster0.dxzduzz.mongodb.net/?retryWrites=true&w=majority";
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const uri = `mongodb+srv://${process.env.DB_user}:${process.env.DB_PASS}@cluster0.dxzduzz.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -27,8 +27,60 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
+
+    const toyCollection = client.db('toyMarket').collection('toys')
+
+    app.get("/toys", async(req, res)=>{
+        const result = await toyCollection.find().toArray()
+        res.send(result)
+      })
+
+
+    app.post("/addtoys", async (req, res) => {
+        const body = req.body;
+        // body.createdAt = new Date();
+        console.log(body);
+        const result = await toyCollection.insertOne(body);
+        if (result?.insertedId) {
+          return res.status(200).send(result);
+        } else {
+          return res.status(404).send({
+            message: "can not insert try again leter",
+            status: false,
+          });
+        }
+      });
+
+      app.patch('/toys/:id', async(req, res)=>{
+        const id = req.params.id
+        const filter = {_id: new ObjectId(id)}
+        const updateToys = req.body
+        
+        
+        const updateDoc = {
+            $set: {
+             status: updateToys.status
+            },
+          };
+          const result = await toyCollection.updateOne(filter, updateDoc)
+          res.send(result)
+    })
+
+
+      app.delete('/toys/:id', async(req, res)=>{
+        const id = req.params.id
+        const query = {_id: new ObjectId(id)}
+        const result = await toyCollection.deleteOne(query)
+        res.send(result)
+
+    })
+
+     
+
+
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
@@ -44,9 +96,6 @@ app.get('/', (req, res)=>{
     res.send('Toy Marketplace Server is running')
 })
 
-app.get('/about', (req, res)=>{
-    res.send('About Toy Marketplace')
-})
 
 
 
