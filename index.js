@@ -33,14 +33,30 @@ async function run() {
     const toyCollection = client.db('toyMarket').collection('toys')
 
     app.get("/toys", async(req, res)=>{
-        const result = await toyCollection.find().toArray()
+        const result = await toyCollection.find().sort({createdAt: -1}).toArray()
         res.send(result)
       })
+
+      app.get("/toy/:id", async(req, res)=>{
+        const id = req.params.id
+        const result = await toyCollection.findOne({_id: new ObjectId(id)})
+        res.send(result)
+      })
+      
+      app.get("/toys/:email", async (req, res) => {
+        console.log(req.params.id);
+        const jobs = await toyCollection
+          .find({
+            selleremail: req.params.email,
+          })
+          .toArray();
+        res.send(jobs);
+      });
 
 
     app.post("/addtoys", async (req, res) => {
         const body = req.body;
-        // body.createdAt = new Date();
+        body.createdAt = new Date();
         console.log(body);
         const result = await toyCollection.insertOne(body);
         if (result?.insertedId) {
@@ -53,17 +69,14 @@ async function run() {
         }
       });
 
-      app.patch('/toys/:id', async(req, res)=>{
+      app.put('/toys/:id', async(req, res)=>{
         const id = req.params.id
         const filter = {_id: new ObjectId(id)}
         const updateToys = req.body
+        console.log(updateToys)
         
         
-        const updateDoc = {
-            $set: {
-             status: updateToys.status
-            },
-          };
+        
           const result = await toyCollection.updateOne(filter, updateDoc)
           res.send(result)
     })
